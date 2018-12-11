@@ -20,12 +20,12 @@ limitations under the License.
 package main
 
 import (
-	"github.com/intelsdi-x/snap-plugin-lib-go/examples/snap-plugin-publisher-file/file"
+	"github.com/intelsdi-x/snap-plugin-lib-go/examples/snap-plugin-publisher-now/now"
 	"github.com/intelsdi-x/snap-plugin-lib-go/v1/plugin"
 )
 
 const (
-	pluginName    = "test-file-publisher"
+	pluginName    = "now-publisher"
 	pluginVersion = 1
 )
 
