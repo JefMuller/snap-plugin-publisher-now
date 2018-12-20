@@ -24,28 +24,94 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"bytes"
+	"encoding/json"
+	"time"
 
 	"github.com/intelsdi-x/snap-plugin-lib-go/v1/plugin"
 )
 
-// FPublisher is a testing publisher.
-type FPublisher struct {
+// OIMetric London metric structure.
+type OIMetric struct {
+	Metric    string                 `json:"metric_type"`
+	Resource  string                 `json:"resource"`
+	Node      string                 `json:"node"`
+	Value     interface{}            `json:"value"`
+	Timestamp int64                  `json:"timestamp"`
+	CiMapping map[string]interface{} `json:"ci2metric_id"`
+	Source    string                 `json:"source"`
 }
 
 /*
 	GetConfigPolicy() returns the configPolicy for your plugin.
-
-	A config policy is how users can provide configuration info to
-	plugin. Here you define what sorts of config info your plugin
-	needs and/or requires.
 */
-func (f FPublisher) GetConfigPolicy() (plugin.ConfigPolicy, error) {
+func (f OIMetric) GetConfigPolicy() (plugin.ConfigPolicy, error) {
 	policy := plugin.NewConfigPolicy()
 	return *policy, nil
 }
 
 // Publish test publish function
-func (f FPublisher) Publish(mts []plugin.Metric, cfg plugin.Config) error {
+func (f OIMetric) Publish(mts []plugin.Metric, cfg plugin.Config) error {
+	
+	if len(mts) > 0 {
+		log.Println("Source")
+		f.Source = "snap"
+
+		log.Println("Determining hostname/nodename")
+		hostname, err = os.Hostname()
+		if err != nil {
+			hostname = "localhost"
+		}
+		f.Node = hostname
+	}
+
+	// Iterate over the supplied metrics
+	for _, m := range mts {
+
+		log.Println("Setting Timestamp")
+		f.Timestamp = m.Timestamp
+
+		/*
+		// Metric contains all info related to a Snap Metric
+		type Metric struct {
+			Namespace   Namespace
+			Version     int64
+			Config      Config
+			Data        interface{}
+			Tags        map[string]string
+			Timestamp   time.Time
+			Unit        string
+			Description string
+			//Unexported but passed through for legacy reasons
+			lastAdvertisedTime time.Time
+		}
+		*/
+
+		// Do some type conversion and send the data
+		switch v := m.Data.(type) {
+		case uint:
+			s.sendIntValue(int64(v))
+		case uint32:
+			s.sendIntValue(int64(v))
+		case uint64:
+			s.sendIntValue(int64(v))
+		case int:
+			s.sendIntValue(int64(v))
+		case int32:
+			s.sendIntValue(int64(v))
+		case int64:
+			s.sendIntValue(int64(v))
+		case float32:
+			s.sendFloatValue(float64(v))
+		case float64:
+			s.sendFloatValue(float64(v))
+		default:
+			log.Printf("Ignoring %T: %v\n", v, v)
+			log.Printf("Contact the plugin author if you think this is an error")
+		}
+	}
+	
+	/*
 	file, err := cfg.GetString("file")
 	if err != nil {
 		return err
@@ -70,6 +136,6 @@ func (f FPublisher) Publish(mts []plugin.Metric, cfg plugin.Config) error {
 		)
 	}
 	writer.Flush()
-
+	*/
 	return nil
 }
